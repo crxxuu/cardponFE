@@ -20,7 +20,7 @@ const navigate=useNavigate()
 
   const discordLoginParams = {
     clientId: '1353009606363709480',
-    redirectUri: 'http://localhost:3000/Signup',
+    redirectUri: 'https://www.cardpon.com/Signup',
     responseType: 'token', 
     scopes: ['identify', 'email'],
     onSuccess: response => {
