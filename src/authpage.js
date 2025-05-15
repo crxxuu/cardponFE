@@ -49,7 +49,7 @@ if(login){
   toast.success(res.data.message,{containerId:'authPage'})
   console.log(res)
   localStorage.setItem('token',res.data.token)
-  navigate('/')
+  window.location.href='/'
 }else{
   let res=await axios.post(`${BASE_URL}/register`,data)
   toast.success(res.data.message,{containerId:"authPage"})

@@ -20,7 +20,13 @@ window.Buffer = Buffer;
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App/>
+    element: <Middleware/>,
+    children:[
+      {
+        path: '/',
+        element: <App />  
+      },
+    ]
   
   },
   {

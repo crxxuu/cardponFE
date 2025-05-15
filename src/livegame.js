@@ -2,27 +2,44 @@ import Header from "./components/header";
 import { useContext, useEffect, useRef, useState } from 'react';
 import { socketContext } from "./socketContext";
 import Peer from 'simple-peer'
+import axios from "axios";
+import { BASE_URL } from "./baseurl";
 export default function LiveGame() {
     
     const [leftOpen, setLeftOpen] = useState(false);
     const [rightOpen, setRightOpen] = useState(false);
     const [leftMessage, setLeftMessage] = useState('');
     const [rightMessage, setRightMessage] = useState('');
+    const [currentOpponent,setCurrentOpponent]=useState('')
     const {socketRef,profile}=useContext(socketContext)
     const localStream=useRef();
     const peers=useRef({});
     const localVideoRef = useRef(null);
+    const [messages,setMessages]=useState([])
     const streams=useRef([])
-    const sampleMessages = [
-        { user: 'Player1', color: 'text-green-500', message: 'Great move!' },
-        { user: 'Spectator', color: 'text-blue-500', message: 'Exciting game!' },
-    ];
+ 
 
 
     useEffect(()=>{
 if(socketRef?.current){
     getLocalStream();
-    
+    socketRef?.current?.emit("getOpponent",profile)
+    socketRef?.current?.on("getOpponent",async(data)=>{
+if(data?.email){
+    let response=await axios.get(`${BASE_URL}/getOpponent/${data?.email}`)
+        setCurrentOpponent(response.data.user)
+}
+    })
+
+    socketRef?.current?.on("sendMessage",(data)=>{
+        console.log("message recieved")
+        console.log(data)
+setMessages((prev)=>{
+    let old=[...prev]
+    old=[...old,{...data, color: 'text-green-500'}]
+    return old
+})
+    })
     socketRef?.current?.on("conn-init",(data)=>{
         console.log('conn-init')
         console.log(data)
@@ -46,6 +63,11 @@ removePeers(socketId)
 }
 
     },[socketRef?.current])
+
+    useEffect(()=>{
+console.log("PROFILE")
+console.log(profile)
+    },[])
 
 
     const removePeers=(socketId)=>{
@@ -144,6 +166,19 @@ socketRef?.current?.emit('signal',signalData)
 
 }
 
+const sendMessage=async()=>{
+try{
+    let data={
+        ...profile,
+        message:leftMessage
+    }
+    socketRef?.current?.emit("sendMessage",data)
+    setLeftMessage("")
+}catch(e){
+
+}
+}
+
     return (
         <div className="w-full p-[20px] relative">
             <Header />
@@ -175,21 +210,24 @@ socketRef?.current?.emit('signal',signalData)
                 
                 <div className={`md:flex flex-col w-80 bg-black p-4 ${leftOpen ? 'absolute left-0 top-0 h-full z-50' : 'hidden'}`}>
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-16 h-16 bg-black rounded-lg"></div>
+                    <div className="w-16 h-16 bg-black rounded-full overflow-hidden">
+    <img className="w-full h-full object-cover" src={currentOpponent?.avatar} />
+</div>
+
                         <div>
-                            <h3 className="text-white text-lg">Username</h3>
+                            <h3 className="text-white text-lg">{currentOpponent?.userName}</h3>
                             <div className="flex gap-2">
-                                <span className="text-green-500 text-sm">W:28</span>
-                                <span className="text-red-500 text-sm">L:5</span>
+                                <span className="text-green-500 text-sm">W:{' '+currentOpponent?.recentMatchHistory?.filter(u=>u?.winBy==profile?._id)?.length}</span>
+                                <span className="text-red-500 text-sm">L:{' '+currentOpponent?.recentMatchHistory?.filter(u=>u?.winBy!=profile?._id)?.length}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto mb-4 space-y-3">
-                        {sampleMessages.map((msg, i) => (
+                        {messages?.map((msg, i) => (
                             <div key={i} className="mb-3">
-                                <span className={`${msg.color} font-bold`}>{msg.user}: </span>
-                                <span className="text-white font-bold">{msg.message}</span>
+                                <span className={`${msg?.color} font-bold`}>{msg?.by}: </span>
+                                <span className="text-white font-bold">{msg?.message}</span>
                             </div>
                         ))}
                     </div>
@@ -202,7 +240,7 @@ socketRef?.current?.emit('signal',signalData)
                             value={leftMessage}
                             onChange={(e) => setLeftMessage(e.target.value)}
                         />
-                        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded">
                             Send
                         </button>
                     </div>
@@ -226,16 +264,16 @@ socketRef?.current?.emit('signal',signalData)
                 <div className={`md:flex flex-col w-80 bg-black p-4 ${rightOpen ? 'absolute right-0 top-0 h-full z-50' : 'hidden'}`}>
                     <h2 className="text-white text-xl mb-4 font-bold">LIVE CHAT</h2>
 
-                    <div className="flex-1 overflow-y-auto mb-4 space-y-3">
-                        {sampleMessages.map((msg, i) => (
+                    {/* <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                        {messages?.map((msg, i) => (
                             <div key={i} className="mb-3">
-                                <span className={`${msg.color} font-bold`}>{msg.user}: </span>
-                                <span className="text-white font-bold">{msg.message}</span>
+                                <span className={`${msg.color} font-bold`}>{msg?.by}: </span>
+                                <span className="text-white font-bold">{msg?.message}</span>
                             </div>
                         ))}
-                    </div>
+                    </div> */}
 
-                    <div className="flex gap-2">
+                    {/* <div className="flex gap-2">
                         <input
                             type="text"
                             className="flex-1 bg-gray-800 text-white p-2 rounded"
@@ -243,10 +281,10 @@ socketRef?.current?.emit('signal',signalData)
                             value={rightMessage}
                             onChange={(e) => setRightMessage(e.target.value)}
                         />
-                        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded">
                             Send
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
