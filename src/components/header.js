@@ -37,6 +37,9 @@ try{
   if(token){
     setIsLoggedIn(true)
   }
+  if(!token){
+return;
+  }
 let headers={
   headers:{
     authorization:`Bearer ${token}`
@@ -54,22 +57,35 @@ setLoading(false)
   return (
     <div className="w-full px-[10px] py-[10px] bg-black flex justify-between items-center">
       <div className="flex flex-col gap-[20px]">
-        <div className="font-bold text-[24px] text-green-500">LOGO</div>
+      <div className="font-bold text-[24px] text-green-500">
+  <img src="Logo.png" className="rounded-full w-16 h-16 object-cover"/>
+</div>
         <nav className="flex lg:gap-[30px] gap-[20px] items-center">
-        <button
-  onClick={() => window.location.href = '/'}
-  className="font-bold text-[14px] lg:text-[18px] text-green-500"
->
-  Browse
-</button>
+      
 <button
   onClick={() => window.location.href = '/'}
   className="font-bold text-[14px] lg:text-[18px] text-green-500"
 >
   Play Now
 </button>
+
 <button
-  onClick={() => window.location.href = '/'}
+  onClick={() => window.location.href = '/cardgame'}
+  className="font-bold text-[14px] lg:text-[18px] text-green-500"
+>
+  Card game
+</button>
+
+<button
+  onClick={() => window.location.href = '/announcements'}
+  className="font-bold text-[14px] lg:text-[18px] text-green-500"
+>
+  Announcement
+</button>
+
+
+<button
+  onClick={() => window.location.href = 'https://discord.gg/77FCC4wqYx'}
   className="font-bold text-[14px] lg:text-[18px] text-green-500"
 >
   Discord
@@ -105,8 +121,12 @@ setLoading(false)
           />
           <span className="text-white font-bold">{user?.userName}</span>
           <div className="flex items-center justify-center gap-[10px]">
-            <span className="font-bold text-white text-[14px]">W : <span className="text-green-500 font-bold">0</span></span>
-            <span className="font-bold text-white text-[14px]">L : <span className="text-red-500 font-bold">0</span></span>
+            <span className="font-bold text-white text-[14px]">W : <span className="text-green-500 font-bold">{user?.
+recentMatchHistory?.filter(u=>u.winBy==user._id && u?.counted===true)?.length
+}</span></span>
+            <span className="font-bold text-white text-[14px]">L : <span className="text-red-500 font-bold">{user?.
+recentMatchHistory?.filter(u=>u?.winBy && u.winBy!=user._id && u?.counted===true)?.length
+}</span></span>
           </div>
          </>}
         </div>
