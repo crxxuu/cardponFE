@@ -21,7 +21,7 @@ const AuthPage = () => {
 
   const discordLoginParams = {
     clientId: '1353009606363709480',
-    redirectUri: 'http://www.cardpon.com/signin',
+    redirectUri: 'https://www.cardpon.com/signin',
     responseType: 'token', 
     scopes: ['identify', 'email'],
     onSuccess: response => {
